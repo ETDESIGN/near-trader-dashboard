@@ -1,18 +1,11 @@
 {
-  "updated_at": "2026-05-15T15:59:12.767649+00:00",
+  "updated_at": "2026-05-15T16:02:16.486686+00:00",
   "pair": "NEAR/USDT",
   "stake": 1000,
   "current_price": 1.52,
-  "price_change_24h": -5.89,
-  "balance_usdt": -0.0,
-  "position": {
-    "side": "short",
-    "entry_price": 1.521247,
-    "size": 657.0927,
-    "entry_time": "2026-05-15T15:59:11.028741+00:00",
-    "atr": 0.001697,
-    "risk_pct": 1.88
-  },
+  "price_change_24h": -5.8,
+  "balance_usdt": 1000.56,
+  "position": null,
   "trades": [
     {
       "time": "2026-05-15T10:32:21.094257+00:00",
@@ -215,16 +208,27 @@
       "pnl_pct": 0.06,
       "exit_reason": "signal_reversal",
       "entry_time": "2026-05-15T15:56:00.472513+00:00"
+    },
+    {
+      "time": "2026-05-15T16:02:15.692300+00:00",
+      "side": "short",
+      "entry_price": 1.521247,
+      "exit_price": 1.522706,
+      "size": 657.0927,
+      "pnl_usdt": -0.9586,
+      "pnl_pct": -0.1,
+      "exit_reason": "signal_reversal",
+      "entry_time": "2026-05-15T15:59:11.028741+00:00"
     }
   ],
   "stats": {
-    "total_trades": 17,
+    "total_trades": 18,
     "wins": 6,
-    "losses": 11,
-    "win_rate": 35.3,
-    "total_pnl": -7.55,
-    "total_pnl_pct": -0.75,
-    "equity": 998.78
+    "losses": 12,
+    "win_rate": 33.3,
+    "total_pnl": -8.5,
+    "total_pnl_pct": -0.85,
+    "equity": 1000.56
   },
   "equity_curve": [
     1000,
@@ -244,14 +248,15 @@
     992.95,
     992.06,
     991.81,
-    992.45
+    992.45,
+    991.5
   ],
   "exit_reasons": {
     "median_recross": 8,
     "restart_cleanup": 1,
     "rsi_extreme": 2,
     "session_end": 2,
-    "signal_reversal": 3,
+    "signal_reversal": 4,
     "forced_cycle_exit": 1
   }
 }
