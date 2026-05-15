@@ -1,18 +1,16 @@
 {
-  "updated_at": "2026-05-15T12:08:44.497035+00:00",
+  "updated_at": "2026-05-15T12:43:33.474828+00:00",
   "pair": "NEAR/USDT",
   "stake": 1000,
   "current_price": 1.55,
-  "price_change_24h": -0.81,
+  "price_change_24h": -1.16,
   "balance_usdt": 0,
   "position": {
-    "side": "long",
-    "entry_price": 1.552114,
-    "size": 646.3702,
-    "entry_time": "2026-05-15T12:08:43.452161+00:00",
-    "signals": {
-      "forced": true
-    }
+    "side": "short",
+    "entry_price": 1.546995,
+    "size": 646.4145,
+    "entry_time": "2026-05-15T12:43:32.788342+00:00",
+    "atr_at_entry": 0.001799
   },
   "trades": [
     {
@@ -98,16 +96,40 @@
       "exit_reason": "restart_cleanup",
       "exit_detail": "Forced 10min cycle exit @ $1.5500",
       "entry_time": "2026-05-15T10:18:12.776486+00:00"
+    },
+    {
+      "time": "2026-05-15T12:15:26.998897+00:00",
+      "side": "long",
+      "entry_price": 1.552114,
+      "exit_price": 1.55254,
+      "size": 646.3702,
+      "pnl_usdt": 0.2757,
+      "pnl_pct": 0.03,
+      "exit_reason": "median_recross",
+      "exit_detail": "Forced 10min cycle exit @ $1.5525",
+      "entry_time": "2026-05-15T12:08:43.452161+00:00"
+    },
+    {
+      "time": "2026-05-15T12:28:23.808013+00:00",
+      "side": "long",
+      "entry_price": 1.555213,
+      "exit_price": 1.552407,
+      "size": 645.262,
+      "pnl_usdt": -1.8107,
+      "pnl_pct": -0.18,
+      "exit_reason": "median_recross",
+      "exit_detail": "Forced 10min cycle exit @ $1.5524",
+      "entry_time": "2026-05-15T12:25:48.406269+00:00"
     }
   ],
   "stats": {
-    "total_trades": 7,
-    "wins": 1,
-    "losses": 6,
-    "win_rate": 14.3,
-    "total_pnl": -9.06,
-    "total_pnl_pct": -0.91,
-    "equity": 1001.87
+    "total_trades": 9,
+    "wins": 2,
+    "losses": 7,
+    "win_rate": 22.2,
+    "total_pnl": -10.6,
+    "total_pnl_pct": -1.06,
+    "equity": 1001.94
   },
   "equity_curve": [
     1000,
@@ -117,10 +139,12 @@
     994.17,
     994.82,
     994.17,
-    990.94
+    990.94,
+    991.21,
+    989.4
   ],
   "exit_reasons": {
-    "median_recross": 6,
+    "median_recross": 8,
     "restart_cleanup": 1
   }
 }
