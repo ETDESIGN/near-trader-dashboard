@@ -1,11 +1,17 @@
 {
-  "updated_at": "2026-05-15T18:18:51.724902+00:00",
+  "updated_at": "2026-05-15T18:18:54.141986+00:00",
   "pair": "NEAR/USDT",
   "stake": 1000,
   "current_price": 1.57,
   "price_change_24h": -1.76,
-  "balance_usdt": 991.69,
-  "position": null,
+  "balance_usdt": 0.0,
+  "position": {
+    "side": "long",
+    "entry_price": 1.569199,
+    "size": 631.9719,
+    "entry_time": "2026-05-15T18:18:53.642016+00:00",
+    "atr": 0.002398
+  },
   "trades": [
     {
       "time": "2026-05-15T10:32:21.094257+00:00",
@@ -382,7 +388,7 @@
     "win_rate": 34.4,
     "total_pnl": -17.06,
     "total_pnl_pct": -1.71,
-    "equity": 991.69
+    "equity": 992.2
   },
   "equity_curve": [
     1000,
