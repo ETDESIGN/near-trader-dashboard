@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-05-15T16:31:20.244919+00:00",
+  "updated_at": "2026-05-15T16:48:30.225051+00:00",
   "pair": "NEAR/USDT",
   "stake": 1000,
-  "current_price": 1.54,
-  "price_change_24h": -5.02,
+  "current_price": 1.55,
+  "price_change_24h": -3.99,
   "balance_usdt": 1007.45,
   "position": null,
   "trades": [
