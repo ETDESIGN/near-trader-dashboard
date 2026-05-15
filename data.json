@@ -1,11 +1,17 @@
 {
-  "updated_at": "2026-05-15T18:09:13.029436+00:00",
+  "updated_at": "2026-05-15T18:09:16.479007+00:00",
   "pair": "NEAR/USDT",
   "stake": 1000,
-  "current_price": 0,
+  "current_price": 1.571059,
   "price_change_24h": null,
-  "balance_usdt": 992.42,
-  "position": null,
+  "balance_usdt": -0.0,
+  "position": {
+    "side": "long",
+    "entry_price": 1.571059,
+    "size": 631.6885,
+    "entry_time": "2026-05-15T18:09:16.008325+00:00",
+    "atr": 0.002641
+  },
   "trades": [
     {
       "time": "2026-05-15T10:32:21.094257+00:00",
