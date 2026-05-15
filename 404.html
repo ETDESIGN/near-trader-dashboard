@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEAR Trader — Live Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        body { background: #0a0a0f; color: #e2e8f0; }
+        .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(20px); }
+        .glow-green { box-shadow: 0 0 20px rgba(34,197,94,0.15); }
+        .glow-red { box-shadow: 0 0 20px rgba(239,68,68,0.15); }
+        .glow-blue { box-shadow: 0 0 20px rgba(59,130,246,0.15); }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .trade-row:hover { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-white/5 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">N</div>
+                <div>
+                    <h1 class="text-lg font-semibold">NEAR Trader</h1>
+                    <p class="text-xs text-slate-500">Paper Trading Analytics</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 text-xs text-slate-400">
+                    <span class="pulse-dot w-2 h-2 rounded-full bg-green-500 inline-block"></span>
+                    <span id="status">LIVE</span>
+                </div>
+                <div class="mono text-xs text-slate-500" id="clock"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        <!-- Top Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass rounded-2xl p-5" id="card-equity">
+                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Equity</p>
+                <p class="text-2xl font-bold mono" id="equity">$1,000.00</p>
+                <p class="text-xs mt-1" id="equity-change">—</p>
+            </div>
+            <div class="glass rounded-2xl p-5">
+                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Total P&L</p>
+                <p class="text-2xl font-bold mono" id="total-pnl">$0.00</p>
+                <p class="text-xs mt-1" id="pnl-pct">0.00%</p>
+            </div>
+            <div class="glass rounded-2xl p-5">
+                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Win Rate</p>
+                <p class="text-2xl font-bold mono" id="win-rate">—</p>
+                <p class="text-xs text-slate-500 mt-1" id="win-count">0 / 0 trades</p>
+            </div>
+            <div class="glass rounded-2xl p-5">
+                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Active Position</p>
+                <p class="text-2xl font-bold mono" id="position">FLAT</p>
+                <p class="text-xs text-slate-500 mt-1" id="position-detail">No open trades</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <!-- Equity Curve -->
+            <div class="lg:col-span-2 glass rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-medium text-slate-300">Equity Curve</h2>
+                    <span class="text-xs text-slate-500 mono">NEAR/USDT</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="equityChart"></canvas>
+                </div>
+            </div>
+            <!-- PnL Distribution -->
+            <div class="glass rounded-2xl p-6">
+                <h2 class="text-sm font-medium text-slate-300 mb-4">Exit Reasons</h2>
+                <div class="h-64">
+                    <canvas id="exitChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strategy + Signal Chart -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Signal History -->
+            <div class="glass rounded-2xl p-6">
+                <h2 class="text-sm font-medium text-slate-300 mb-4">Signal Indicators</h2>
+                <div class="h-56">
+                    <canvas id="signalChart"></canvas>
+                </div>
+            </div>
+            <!-- Strategy Summary -->
+            <div class="glass rounded-2xl p-6">
+                <h2 class="text-sm font-medium text-slate-300 mb-4">Strategy Config</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-xs text-slate-400">Pair</span>
+                        <span class="mono text-sm">NEAR / USDT</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-xs text-slate-400">Exchange</span>
+                        <span class="mono text-sm">Binance (CoinGecko feed)</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-xs text-slate-400">Stake</span>
+                        <span class="mono text-sm">$1,000.00</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-xs text-slate-400">Timeframes</span>
+                        <span class="mono text-sm">5m / 15m MTF</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-xs text-slate-400">StochRSI Period</span>
+                        <span class="mono text-sm">14</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-white/5">
+                        <span class="text-xs text-slate-400">Entry (Long)</span>
+                        <span class="mono text-sm text-green-400">K &lt; 20 + SROCST &gt; 0</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-xs text-slate-400">Entry (Short)</span>
+                        <span class="mono text-sm text-red-400">K &gt; 80 + SROCST &lt; 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trade Log -->
+        <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm font-medium text-slate-300">Trade History</h2>
+                <span class="text-xs text-slate-500 mono" id="trade-count">0 trades</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
+                            <th class="text-left py-3 px-2">#</th>
+                            <th class="text-left py-3 px-2">Side</th>
+                            <th class="text-right py-3 px-2">Entry</th>
+                            <th class="text-right py-3 px-2">Exit</th>
+                            <th class="text-right py-3 px-2">Size</th>
+                            <th class="text-right py-3 px-2">P&L</th>
+                            <th class="text-right py-3 px-2">P&L %</th>
+                            <th class="text-left py-3 px-2">Exit Reason</th>
+                            <th class="text-left py-3 px-2">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trade-body">
+                        <tr>
+                            <td colspan="9" class="py-8 text-center text-slate-600">Waiting for first trade to close...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center py-6 text-xs text-slate-600">
+            NEAR Paper Trader v1.0 · StochRSI + SROCST + RPMAR · Built by Dereck & Dev Team
+        </footer>
+    </main>
+
+    <script>
+    // ─── Sample Data (replace with live API when ready) ───
+    const TRADES = [
+        // Simulated history — the live trader will feed real data
+    ];
+
+    const STATE = {
+        pair: "NEAR/USDT",
+        stake: 1000,
+        balance: 0,
+        position: { side: "short", entry_price: 1.545, size: 647.2492, entry_time: "2026-05-15T10:18:12Z" },
+        trades: [],
+        started_at: "2026-05-15T10:15:37Z",
+        current_price: 1.5422
+    };
+
+    // ─── Computed ───
+    const totalPnl = STATE.trades.reduce((s, t) => s + t.pnl_usdt, 0);
+    const wins = STATE.trades.filter(t => t.pnl_usdt > 0).length;
+    const total = STATE.trades.length;
+    const equity = STATE.balance || (STATE.position ? STATE.position.size * STATE.current_price : STATE.stake);
+
+    // ─── Render ───
+    function render() {
+        // Equity
+        document.getElementById("equity").textContent = `$${equity.toFixed(2)}`;
+        const eqDiff = equity - STATE.stake;
+        const eqEl = document.getElementById("equity-change");
+        eqEl.textContent = `${eqDiff >= 0 ? '+' : ''}$${eqDiff.toFixed(2)} today`;
+        eqEl.className = `text-xs mt-1 ${eqDiff >= 0 ? 'text-green-400' : 'text-red-400'}`;
+
+        // PnL
+        const pnlEl = document.getElementById("total-pnl");
+        pnlEl.textContent = `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`;
+        pnlEl.className = `text-2xl font-bold mono ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        document.getElementById("pnl-pct").textContent = `${((totalPnl / STATE.stake) * 100).toFixed(2)}%`;
+
+        // Win Rate
+        document.getElementById("win-rate").textContent = total > 0 ? `${((wins/total)*100).toFixed(0)}%` : '—';
+        document.getElementById("win-count").textContent = `${wins} / ${total} trades`;
+
+        // Position
+        const posEl = document.getElementById("position");
+        const posDet = document.getElementById("position-detail");
+        if (STATE.position) {
+            const pos = STATE.position;
+            const isLong = pos.side === 'long';
+            const unrealized = isLong
+                ? (STATE.current_price - pos.entry_price) * pos.size
+                : (pos.entry_price - STATE.current_price) * pos.size;
+            posEl.textContent = pos.side.toUpperCase();
+            posEl.className = `text-2xl font-bold mono ${isLong ? 'text-green-400' : 'text-red-400'}`;
+            posDet.textContent = `Entry: $${pos.entry_price.toFixed(4)} | Size: ${pos.size.toFixed(2)} NEAR`;
+            posDet.className = `text-xs mt-1 mono ${unrealized >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            const card = document.getElementById("card-equity");
+            card.className = `glass rounded-2xl p-5 ${unrealized >= 0 ? 'glow-green' : 'glow-red'}`;
+        } else {
+            posEl.textContent = 'FLAT';
+            posEl.className = 'text-2xl font-bold mono text-slate-500';
+            posDet.textContent = 'No open trades';
+            posDet.className = 'text-xs text-slate-500 mt-1';
+        }
+
+        // Trade count
+        document.getElementById("trade-count").textContent = `${total} trades`;
+
+        // Trade table
+        const tbody = document.getElementById("trade-body");
+        if (total === 0) {
+            tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-600">
+                <div class="flex flex-col items-center gap-2">
+                    <span class="pulse-dot w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+                    <span>Active short position running — waiting for exit...</span>
+                </div>
+            </td></tr>`;
+        } else {
+            tbody.innerHTML = STATE.trades.map((t, i) => `
+                <tr class="trade-row border-b border-white/5">
+                    <td class="py-3 px-2 mono text-slate-500">${i + 1}</td>
+                    <td class="py-3 px-2">
+                        <span class="px-2 py-0.5 rounded text-xs font-medium ${t.side === 'long' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">${t.side.toUpperCase()}</span>
+                    </td>
+                    <td class="py-3 px-2 text-right mono">$${t.entry_price.toFixed(4)}</td>
+                    <td class="py-3 px-2 text-right mono">$${t.exit_price.toFixed(4)}</td>
+                    <td class="py-3 px-2 text-right mono">${t.size.toFixed(2)}</td>
+                    <td class="py-3 px-2 text-right mono ${t.pnl_usdt >= 0 ? 'text-green-400' : 'text-red-400'}">${t.pnl_usdt >= 0 ? '+' : ''}$${t.pnl_usdt.toFixed(2)}</td>
+                    <td class="py-3 px-2 text-right mono ${t.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}">${t.pnl_pct >= 0 ? '+' : ''}${t.pnl_pct.toFixed(2)}%</td>
+                    <td class="py-3 px-2"><span class="text-xs px-2 py-0.5 rounded bg-white/5 text-slate-300">${t.exit_reason}</span></td>
+                    <td class="py-3 px-2 text-xs text-slate-500">${new Date(t.time).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    // ─── Charts ───
+    function initCharts() {
+        // Equity Curve
+        const eqCtx = document.getElementById("equityChart").getContext("2d");
+        const gradient = eqCtx.createLinearGradient(0, 0, 0, 250);
+        gradient.addColorStop(0, "rgba(96, 165, 250, 0.15)");
+        gradient.addColorStop(1, "rgba(96, 165, 250, 0.0)");
+
+        new Chart(eqCtx, {
+            type: "line",
+            data: {
+                labels: ["Start", "Now"],
+                datasets: [{
+                    label: "Equity",
+                    data: [STATE.stake, equity],
+                    borderColor: "#60a5fa",
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHitRadius: 10,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "#475569", font: { size: 10 } } },
+                    y: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "#475569", font: { size: 10, family: "JetBrains Mono" }, callback: v => '$' + v } },
+                },
+                interaction: { intersect: false, mode: "index" },
+            }
+        });
+
+        // Exit Reasons
+        const exitCtx = document.getElementById("exitChart").getContext("2d");
+        new Chart(exitCtx, {
+            type: "doughnut",
+            data: {
+                labels: ["Median Recross", "RPMAR", "Signal Reversal", "RSI"],
+                datasets: [{
+                    data: [65, 25, 5, 5],
+                    backgroundColor: ["#60a5fa", "#a78bfa", "#f472b6", "#34d399"],
+                    borderWidth: 0,
+                    hoverOffset: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "70%",
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { color: "#64748b", font: { size: 10 }, boxWidth: 8, padding: 12 },
+                    },
+                },
+            }
+        });
+
+        // Signal Chart
+        const sigCtx = document.getElementById("signalChart").getContext("2d");
+        new Chart(sigCtx, {
+            type: "bar",
+            data: {
+                labels: ["Longs", "Shorts"],
+                datasets: [{
+                    label: "Signals",
+                    data: [0, 1],
+                    backgroundColor: ["rgba(34,197,94,0.6)", "rgba(239,68,68,0.6)"],
+                    borderRadius: 8,
+                    barThickness: 40,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: "#64748b" } },
+                    y: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "#64748b", stepSize: 1 } },
+                },
+            }
+        });
+    }
+
+    // ─── Clock ───
+    function updateClock() {
+        document.getElementById("clock").textContent = new Date().toLocaleTimeString();
+    }
+
+    // ─── Init ───
+    render();
+    initCharts();
+    updateClock();
+    setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
