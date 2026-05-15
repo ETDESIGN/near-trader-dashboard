@@ -3,493 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEAR Trader — Live Analytics Dashboard</title>
+    <title>NEAR Trader v5 — Analytics Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
         .mono { font-family: 'JetBrains Mono', monospace; }
         body { background: #0a0a0f; color: #e2e8f0; }
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(20px); }
-        .glow-green { box-shadow: 0 0 20px rgba(34,197,94,0.15); }
-        .glow-red { box-shadow: 0 0 20px rgba(239,68,68,0.15); }
-        .glow-blue { box-shadow: 0 0 20px rgba(59,130,246,0.15); }
-        .pulse-dot { animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .trade-row:hover { background: rgba(255,255,255,0.05); }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+        .trade-row:hover { background: rgba(255,255,255,0.04); }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="min-h-screen">
-    <!-- Header -->
     <header class="border-b border-white/5 px-6 py-4">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">N</div>
                 <div>
-                    <h1 class="text-lg font-semibold">NEAR Trader</h1>
-                    <p class="text-xs text-slate-500">Paper Trading Analytics</p>
+                    <h1 class="text-lg font-semibold">NEAR Trader <span class="text-xs text-purple-400 font-normal">v5</span></h1>
+                    <p class="text-xs text-slate-500">Paper Trading · StochRSI + Regime Filter + RSI Exit</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2 text-xs text-slate-400">
-                    <span class="pulse-dot w-2 h-2 rounded-full bg-green-500 inline-block" id="status-dot"></span>
-                    <span id="status">CONNECTING...</span>
-                </div>
-                <div class="glass rounded-lg px-3 py-1 flex items-center gap-2">
-                    <span class="text-xs text-slate-400">NEAR</span>
-                    <span class="mono text-sm font-semibold text-blue-400" id="coingecko-price">—</span>
-                    <span class="text-xs" id="coingecko-change">—</span>
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="pulse w-2 h-2 rounded-full bg-green-500 inline-block" id="dot"></span>
+                    <span class="text-slate-400" id="status">LOADING</span>
                 </div>
                 <div class="mono text-xs text-slate-500" id="clock"></div>
+                <div class="mono text-xs text-slate-400" id="price-header">—</div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-8 space-y-6">
-        <!-- Last Updated Bar -->
-        <div class="flex items-center justify-between text-xs text-slate-500">
-            <span id="last-updated">Loading data...</span>
-            <span id="refresh-timer" class="mono">Next refresh in 60s</span>
-        </div>
-
+    <main class="max-w-7xl mx-auto px-6 py-6 space-y-4">
         <!-- Top Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="glass rounded-2xl p-5" id="card-equity">
-                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Equity</p>
-                <p class="text-2xl font-bold mono" id="equity">—</p>
-                <p class="text-xs mt-1" id="equity-change">—</p>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div class="glass rounded-xl p-4">
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Equity</p>
+                <p class="text-xl font-bold mono" id="equity">—</p>
             </div>
-            <div class="glass rounded-2xl p-5">
-                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Total P&L</p>
-                <p class="text-2xl font-bold mono" id="total-pnl">—</p>
-                <p class="text-xs mt-1" id="pnl-pct">—</p>
+            <div class="glass rounded-xl p-4">
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">P&L</p>
+                <p class="text-xl font-bold mono" id="pnl">—</p>
             </div>
-            <div class="glass rounded-2xl p-5">
-                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Win Rate</p>
-                <p class="text-2xl font-bold mono" id="win-rate">—</p>
-                <p class="text-xs text-slate-500 mt-1" id="win-count">—</p>
+            <div class="glass rounded-xl p-4">
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Win Rate</p>
+                <p class="text-xl font-bold mono" id="winrate">—</p>
+                <p class="text-[10px] text-slate-500" id="wincount"></p>
             </div>
-            <div class="glass rounded-2xl p-5">
-                <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Active Position</p>
-                <p class="text-2xl font-bold mono" id="position">—</p>
-                <p class="text-xs text-slate-500 mt-1" id="position-detail">—</p>
+            <div class="glass rounded-xl p-4">
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Avg Win / Loss</p>
+                <p class="text-sm font-bold mono"><span class="text-green-400" id="avgwin">—</span> / <span class="text-red-400" id="avgloss">—</span></p>
+            </div>
+            <div class="glass rounded-xl p-4">
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Position</p>
+                <p class="text-xl font-bold mono" id="position">FLAT</p>
+                <p class="text-[10px] text-slate-500" id="pos-detail"></p>
             </div>
         </div>
 
-        <!-- Charts Row -->
+        <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <!-- Equity Curve -->
-            <div class="lg:col-span-2 glass rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-sm font-medium text-slate-300">Equity Curve</h2>
-                    <span class="text-xs text-slate-500 mono">NEAR/USDT</span>
-                </div>
-                <div class="h-64">
-                    <canvas id="equityChart"></canvas>
-                </div>
+            <div class="lg:col-span-2 glass rounded-xl p-5">
+                <h2 class="text-xs font-medium text-slate-400 mb-3">Equity Curve</h2>
+                <div class="h-52"><canvas id="eqChart"></canvas></div>
             </div>
-            <!-- PnL Distribution -->
-            <div class="glass rounded-2xl p-6">
-                <h2 class="text-sm font-medium text-slate-300 mb-4">Exit Reasons</h2>
-                <div class="h-64">
-                    <canvas id="exitChart"></canvas>
-                </div>
+            <div class="glass rounded-xl p-5">
+                <h2 class="text-xs font-medium text-slate-400 mb-3">Exit Reasons</h2>
+                <div class="h-52"><canvas id="exitChart"></canvas></div>
             </div>
         </div>
 
-        <!-- Strategy + Signal Chart -->
+        <!-- Strategy Info + Long/Short -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- Signal History -->
-            <div class="glass rounded-2xl p-6">
-                <h2 class="text-sm font-medium text-slate-300 mb-4">Signal Indicators</h2>
-                <div class="h-56">
-                    <canvas id="signalChart"></canvas>
+            <div class="glass rounded-xl p-5">
+                <h2 class="text-xs font-medium text-slate-400 mb-3">Strategy v5 Config</h2>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Regime Filter</span><span class="mono text-xs text-blue-400">EMA(9/21) aligned = trade</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Entry Score</span><span class="mono text-xs">≥ 60/100</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Primary Exit</span><span class="mono text-xs text-green-400">RSI extreme (70/30)</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Kill Exit</span><span class="mono text-xs text-red-400">1× ATR in 5 min</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">StochRSI</span><span class="mono text-xs">14-3-3</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Position Size</span><span class="mono text-xs">Vol-scaled 1-1.5%</span></div>
+                    <div class="flex justify-between py-1.5"><span class="text-slate-500 text-xs">Circuit Breaker</span><span class="mono text-xs">2 losses → 15min pause</span></div>
                 </div>
             </div>
-            <!-- Strategy Summary -->
-            <div class="glass rounded-2xl p-6">
-                <h2 class="text-sm font-medium text-slate-300 mb-4">Strategy Config</h2>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center py-2 border-b border-white/5">
-                        <span class="text-xs text-slate-400">Pair</span>
-                        <span class="mono text-sm">NEAR / USDT</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2 border-b border-white/5">
-                        <span class="text-xs text-slate-400">Exchange</span>
-                        <span class="mono text-sm">Binance (CoinGecko feed)</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2 border-b border-white/5">
-                        <span class="text-xs text-slate-400">Stake</span>
-                        <span class="mono text-sm">$1,000.00</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2 border-b border-white/5">
-                        <span class="text-xs text-slate-400">Timeframes</span>
-                        <span class="mono text-sm">5m / 15m MTF</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2 border-b border-white/5">
-                        <span class="text-xs text-slate-400">StochRSI Period</span>
-                        <span class="mono text-sm">14</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2 border-b border-white/5">
-                        <span class="text-xs text-slate-400">Entry (Long)</span>
-                        <span class="mono text-sm text-green-400">K &lt; 20 + SROCST &gt; 0</span>
-                    </div>
-                    <div class="flex justify-between items-center py-2">
-                        <span class="text-xs text-slate-400">Entry (Short)</span>
-                        <span class="mono text-sm text-red-400">K &gt; 80 + SROCST &lt; 0</span>
-                    </div>
+            <div class="glass rounded-xl p-5">
+                <h2 class="text-xs font-medium text-slate-400 mb-3">Trade Breakdown</h2>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">LONG / SHORT</span><span class="mono text-xs"><span class="text-green-400" id="longs">0</span> / <span class="text-red-400" id="shorts">0</span></span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Best Trade</span><span class="mono text-xs text-green-400" id="best">—</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Worst Trade</span><span class="mono text-xs text-red-400" id="worst">—</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Profit Factor</span><span class="mono text-xs" id="pf">—</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Max Drawdown</span><span class="mono text-xs text-red-400" id="dd">—</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Total Trades</span><span class="mono text-xs" id="total">0</span></div>
+                    <div class="flex justify-between py-1.5"><span class="text-slate-500 text-xs">Version</span><span class="mono text-xs text-purple-400">v5 — Lessons Applied</span></div>
                 </div>
             </div>
         </div>
 
         <!-- Trade Log -->
-        <div class="glass rounded-2xl p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-medium text-slate-300">Trade History</h2>
-                <span class="text-xs text-slate-500 mono" id="trade-count">—</span>
+        <div class="glass rounded-xl p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xs font-medium text-slate-400">Trade History</h2>
+                <span class="text-[10px] text-slate-500 mono" id="trade-count"></span>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="w-full text-xs">
                     <thead>
-                        <tr class="text-xs text-slate-500 uppercase tracking-wider border-b border-white/5">
-                            <th class="text-left py-3 px-2">#</th>
-                            <th class="text-left py-3 px-2">Side</th>
-                            <th class="text-right py-3 px-2">Entry</th>
-                            <th class="text-right py-3 px-2">Exit</th>
-                            <th class="text-right py-3 px-2">Size</th>
-                            <th class="text-right py-3 px-2">P&L</th>
-                            <th class="text-right py-3 px-2">P&L %</th>
-                            <th class="text-left py-3 px-2">Exit Reason</th>
-                            <th class="text-left py-3 px-2">Time</th>
+                        <tr class="text-[10px] text-slate-500 uppercase tracking-wider border-b border-white/5">
+                            <th class="text-left py-2 px-1">#</th>
+                            <th class="text-left py-2 px-1">Side</th>
+                            <th class="text-right py-2 px-1">Entry</th>
+                            <th class="text-right py-2 px-1">Exit</th>
+                            <th class="text-right py-2 px-1">P&L $</th>
+                            <th class="text-right py-2 px-1">P&L %</th>
+                            <th class="text-left py-2 px-1">Exit Reason</th>
+                            <th class="text-left py-2 px-1">Time</th>
                         </tr>
                     </thead>
-                    <tbody id="trade-body">
-                        <tr><td colspan="9" class="py-8 text-center text-slate-600">Loading trades...</td></tr>
-                    </tbody>
+                    <tbody id="tbody"><tr><td colspan="8" class="py-6 text-center text-slate-600">Loading...</td></tr></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="text-center py-6 text-xs text-slate-600">
-            NEAR Paper Trader v2.0 · StochRSI + SROCST + RPMAR · Live Data · Auto-refresh 60s
+        <footer class="text-center py-4 text-[10px] text-slate-600">
+            NEAR Paper Trader v5 · Regime Filter + Score Entry + RSI Exit + Circuit Breaker · Updated every 60s
         </footer>
     </main>
 
     <script>
-    // ─── Global State ───
-    let equityChart, exitChart, signalChart;
-    let DATA = null;
-    let COINGECKO = null;
-    const REFRESH_INTERVAL = 60; // seconds
-    let refreshCountdown = REFRESH_INTERVAL;
+    let eqChart, exChart;
+    const $ = id => document.getElementById(id);
 
-    // ─── Data Fetching ───
-    async function fetchData() {
+    function render(d) {
+        if (!d) return;
+        const s = d.stats || {};
+        const trades = d.trades || [];
+        const equity = s.equity || d.stake || 1000;
+        const pnl = s.total_pnl || 0;
+
+        // Header price
+        if (d.current_price) $('price-header').textContent = `$${d.current_price.toFixed(4)} NEAR`;
+
+        // Stats
+        $('equity').textContent = `$${equity.toFixed(2)}`;
+        $('equity').className = `text-xl font-bold mono ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+
+        $('pnl').textContent = `${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}`;
+        $('pnl').className = `text-xl font-bold mono ${pnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
+
+        const wr = s.win_rate || 0;
+        $('winrate').textContent = `${wr.toFixed(0)}%`;
+        $('wincount').textContent = `${s.wins || 0}W / ${s.losses || 0}L`;
+
+        $('avgwin').textContent = `+$${(s.avg_win || 0).toFixed(2)}`;
+        $('avgloss').textContent = `-$${Math.abs(s.avg_loss || 0).toFixed(2)}`;
+
+        $('longs').textContent = s.longs || 0;
+        $('shorts').textContent = s.shorts || 0;
+        $('best').textContent = `+$${(s.best_trade || 0).toFixed(2)}`;
+        $('worst').textContent = `-$${Math.abs(s.worst_trade || 0).toFixed(2)}`;
+        $('total').textContent = s.total_trades || 0;
+        $('trade-count').textContent = `${trades.length} trades`;
+
+        // Profit factor
+        const grossWin = trades.filter(t => t.pnl_usdt > 0).reduce((a,t) => a + t.pnl_usdt, 0);
+        const grossLoss = Math.abs(trades.filter(t => t.pnl_usdt < 0).reduce((a,t) => a + t.pnl_usdt, 0));
+        const pf = grossLoss > 0 ? (grossWin / grossLoss).toFixed(2) : '∞';
+        $('pf').textContent = pf;
+        $('pf').className = `mono text-xs ${parseFloat(pf) >= 1 ? 'text-green-400' : 'text-red-400'}`;
+
+        // Max drawdown
+        let peak = 1000, maxDD = 0;
+        (d.equity_curve || []).forEach(e => { if (e > peak) peak = e; const dd = (peak - e)/peak*100; if (dd > maxDD) maxDD = dd; });
+        $('dd').textContent = `-${maxDD.toFixed(2)}%`;
+
+        // Position
+        if (d.position) {
+            const p = d.position;
+            $('position').textContent = p.side.toUpperCase();
+            $('position').className = `text-xl font-bold mono ${p.side === 'long' ? 'text-green-400' : 'text-red-400'}`;
+            $('pos-detail').textContent = `Entry: $${p.entry_price?.toFixed(4)}`;
+        } else {
+            $('position').textContent = 'FLAT';
+            $('position').className = 'text-xl font-bold mono text-slate-500';
+            $('pos-detail').textContent = '';
+        }
+
+        // Trade table (newest first)
+        if (trades.length === 0) {
+            $('tbody').innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-600">Waiting for trades...</td></tr>';
+        } else {
+            $('tbody').innerHTML = [...trades].reverse().map((t, i) => {
+                const n = trades.length - i;
+                const e = t.pnl_usdt > 0 ? '🟢' : t.pnl_usdt < 0 ? '🔴' : '⚪';
+                const sideCls = t.side === 'long' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400';
+                const pnlCls = t.pnl_usdt >= 0 ? 'text-green-400' : 'text-red-400';
+                return `<tr class="trade-row border-b border-white/5">
+                    <td class="py-2 px-1 mono text-slate-600">${n}</td>
+                    <td class="py-2 px-1"><span class="px-1.5 py-0.5 rounded text-[10px] font-medium ${sideCls}">${t.side.toUpperCase()}</span></td>
+                    <td class="py-2 px-1 text-right mono">${t.entry_price?.toFixed(4)}</td>
+                    <td class="py-2 px-1 text-right mono">${t.exit_price?.toFixed(4)}</td>
+                    <td class="py-2 px-1 text-right mono ${pnlCls}">${t.pnl_usdt >= 0 ? '+' : ''}$${t.pnl_usdt?.toFixed(2)}</td>
+                    <td class="py-2 px-1 text-right mono ${pnlCls}">${t.pnl_pct >= 0 ? '+' : ''}${t.pnl_pct?.toFixed(2)}%</td>
+                    <td class="py-2 px-1"><span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5">${(t.exit_reason||'').replace('partial_','')}</span></td>
+                    <td class="py-2 px-1 text-slate-600">${t.time ? new Date(t.time).toLocaleString() : ''}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Equity chart
+        const eqData = d.equity_curve || [1000];
+        const labels = eqData.map((_, i) => i === 0 ? 'Start' : `#${i}`);
+        if (eqChart) eqChart.destroy();
+        const ctx = $('eqChart').getContext('2d');
+        const grad = ctx.createLinearGradient(0,0,0,200);
+        grad.addColorStop(0, pnl >= 0 ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        eqChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ data: eqData, borderColor: pnl >= 0 ? '#22c55e' : '#ef4444', backgroundColor: grad, borderWidth: 2, fill: true, tension: 0.3, pointRadius: 2, pointBackgroundColor: pnl >= 0 ? '#22c55e' : '#ef4444' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                scales: { x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#475569', font: { size: 9 } } },
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#475569', font: { size: 9, family: 'JetBrains Mono' }, callback: v => '$' + v.toFixed(0) } } } }
+        });
+
+        // Exit chart
+        const reasons = d.exit_reasons || {};
+        if (exChart) exChart.destroy();
+        const colors = {'rsi_extreme':'#22c55e','trailing_stop':'#60a5fa','emergency_stop':'#ef4444','signal_reversal':'#a78bfa','median_recross':'#f472b6','time_decay':'#fbbf24','forced_cycle_exit':'#fb923c','session_end':'#64748b','restart_cleanup':'#64748b'};
+        exChart = new Chart($('exitChart').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: Object.keys(reasons).map(r => r.replace(/_/g,' ')), datasets: [{ data: Object.values(reasons), backgroundColor: Object.keys(reasons).map(r => colors[r] || '#64748b'), borderWidth: 0, hoverOffset: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#64748b', font: { size: 9 }, boxWidth: 8, padding: 8 } } } }
+        });
+    }
+
+    async function refresh() {
         try {
-            const [dataRes, cgRes] = await Promise.allSettled([
+            const [dRes, cRes] = await Promise.allSettled([
                 fetch('data.json', { cache: 'no-store' }),
                 fetch('https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_24hr_change=true')
             ]);
-
-            if (dataRes.status === 'fulfilled' && dataRes.value.ok) {
-                DATA = await dataRes.value.json();
-            } else {
-                console.warn('data.json fetch failed:', dataRes);
+            if (dRes.status === 'fulfilled' && dRes.value.ok) render(await dRes.value.json());
+            if (cRes.status === 'fulfilled' && cRes.value.ok) {
+                const cg = await cRes.value.json();
+                if (cg.near) $('price-header').textContent = `$${cg.near.usd?.toFixed(4)} NEAR ${cg.near.usd_24h_change >= 0 ? '↑' : '↓'}`;
             }
-
-            if (cgRes.status === 'fulfilled' && cgRes.value.ok) {
-                COINGECKO = await cgRes.value.json();
-            } else {
-                console.warn('CoinGecko fetch failed:', cgRes);
-            }
-
-            // Update status indicator
-            const statusEl = document.getElementById('status');
-            const dotEl = document.getElementById('status-dot');
-            if (DATA) {
-                statusEl.textContent = 'LIVE';
-                dotEl.className = 'pulse-dot w-2 h-2 rounded-full bg-green-500 inline-block';
-            } else {
-                statusEl.textContent = 'DATA ERROR';
-                dotEl.className = 'pulse-dot w-2 h-2 rounded-full bg-yellow-500 inline-block';
-            }
-
-            if (DATA) render();
-            if (COINGECKO) renderCoinGecko();
-
-            // Update timestamp
-            document.getElementById('last-updated').textContent =
-                `Last updated: ${new Date().toLocaleTimeString()} · data.json ${DATA ? '✓' : '✗'} · CoinGecko ${COINGECKO ? '✓' : '✗'}`;
-
-        } catch (err) {
-            console.error('Fetch error:', err);
-            document.getElementById('status').textContent = 'OFFLINE';
-            document.getElementById('status-dot').className = 'pulse-dot w-2 h-2 rounded-full bg-red-500 inline-block';
+            $('status').textContent = 'LIVE';
+            $('dot').className = 'pulse w-2 h-2 rounded-full bg-green-500 inline-block';
+        } catch {
+            $('status').textContent = 'OFFLINE';
+            $('dot').className = 'pulse w-2 h-2 rounded-full bg-red-500 inline-block';
         }
     }
 
-    // ─── CoinGecko Price Display ───
-    function renderCoinGecko() {
-        if (!COINGECKO || !COINGECKO.near) return;
-        const price = COINGECKO.near.usd;
-        const change = COINGECKO.near.usd_24h_change;
-        document.getElementById('coingecko-price').textContent = `$${price.toFixed(4)}`;
-        const chEl = document.getElementById('coingecko-change');
-        chEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-        chEl.className = `text-xs ${change >= 0 ? 'text-green-400' : 'text-red-400'}`;
-    }
-
-    // ─── Render Dashboard ───
-    function render() {
-        if (!DATA) return;
-
-        const stake = DATA.stake || 1000;
-        const stats = DATA.stats || {};
-        const equity = stats.equity || stake;
-        const totalPnl = stats.total_pnl || 0;
-        const wins = stats.wins || 0;
-        const total = stats.total_trades || 0;
-        const trades = DATA.trades || [];
-        const position = DATA.position;
-        const currentPrice = DATA.current_price;
-
-        // Equity
-        document.getElementById("equity").textContent = `$${equity.toFixed(2)}`;
-        const eqDiff = equity - stake;
-        const eqEl = document.getElementById("equity-change");
-        eqEl.textContent = `${eqDiff >= 0 ? '+' : ''}$${eqDiff.toFixed(2)} from stake`;
-        eqEl.className = `text-xs mt-1 ${eqDiff >= 0 ? 'text-green-400' : 'text-red-400'}`;
-
-        // PnL
-        const pnlEl = document.getElementById("total-pnl");
-        pnlEl.textContent = `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`;
-        pnlEl.className = `text-2xl font-bold mono ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
-        const pnlPctEl = document.getElementById("pnl-pct");
-        pnlPctEl.textContent = `${stats.total_pnl_pct ? stats.total_pnl_pct.toFixed(2) : ((totalPnl / stake) * 100).toFixed(2)}%`;
-        pnlPctEl.className = `text-xs mt-1 ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`;
-
-        // Win Rate
-        const winRate = total > 0 ? ((wins / total) * 100) : 0;
-        document.getElementById("win-rate").textContent = total > 0 ? `${winRate.toFixed(0)}%` : '—';
-        document.getElementById("win-count").textContent = `${wins} / ${total} trades`;
-
-        // Position
-        const posEl = document.getElementById("position");
-        const posDet = document.getElementById("position-detail");
-        if (position && position.side) {
-            const isLong = position.side === 'long';
-            const unrealized = isLong
-                ? (currentPrice - position.entry_price) * position.size
-                : (position.entry_price - currentPrice) * position.size;
-            posEl.textContent = position.side.toUpperCase();
-            posEl.className = `text-2xl font-bold mono ${isLong ? 'text-green-400' : 'text-red-400'}`;
-            posDet.textContent = `Entry: $${position.entry_price.toFixed(4)} | Size: ${position.size.toFixed(2)} NEAR | Unrealized: ${unrealized >= 0 ? '+' : ''}$${unrealized.toFixed(2)}`;
-            posDet.className = `text-xs mt-1 mono ${unrealized >= 0 ? 'text-green-400' : 'text-red-400'}`;
-            const card = document.getElementById("card-equity");
-            card.className = `glass rounded-2xl p-5 ${unrealized >= 0 ? 'glow-green' : 'glow-red'}`;
-
-            // Show signal indicators if available
-            if (position.signals) {
-                const sig = position.signals;
-                posDet.textContent += ` | K:${sig.srsi_k?.toFixed(1) || '—'} SROCST:${sig.srocst?.toFixed(4) || '—'}`;
-            }
-        } else {
-            posEl.textContent = 'FLAT';
-            posEl.className = 'text-2xl font-bold mono text-slate-500';
-            posDet.textContent = 'No open trades';
-            posDet.className = 'text-xs text-slate-500 mt-1';
-            document.getElementById("card-equity").className = 'glass rounded-2xl p-5';
-        }
-
-        // Trade count
-        document.getElementById("trade-count").textContent = `${total} trades`;
-
-        // Trade table
-        const tbody = document.getElementById("trade-body");
-        if (total === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-600">
-                <div class="flex flex-col items-center gap-2">
-                    <span class="pulse-dot w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
-                    <span>${position ? 'Active ' + position.side + ' position running — waiting for exit...' : 'Waiting for first trade...'}</span>
-                </div>
-            </td></tr>`;
-        } else {
-            // Show most recent first
-            const sortedTrades = [...trades].reverse();
-            tbody.innerHTML = sortedTrades.map((t, i) => `
-                <tr class="trade-row border-b border-white/5">
-                    <td class="py-3 px-2 mono text-slate-500">${total - i}</td>
-                    <td class="py-3 px-2">
-                        <span class="px-2 py-0.5 rounded text-xs font-medium ${t.side === 'long' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}">${t.side.toUpperCase()}</span>
-                    </td>
-                    <td class="py-3 px-2 text-right mono">$${t.entry_price.toFixed(4)}</td>
-                    <td class="py-3 px-2 text-right mono">$${t.exit_price.toFixed(4)}</td>
-                    <td class="py-3 px-2 text-right mono">${t.size.toFixed(2)}</td>
-                    <td class="py-3 px-2 text-right mono ${t.pnl_usdt >= 0 ? 'text-green-400' : 'text-red-400'}">${t.pnl_usdt >= 0 ? '+' : ''}$${t.pnl_usdt.toFixed(2)}</td>
-                    <td class="py-3 px-2 text-right mono ${t.pnl_pct >= 0 ? 'text-green-400' : 'text-red-400'}">${t.pnl_pct >= 0 ? '+' : ''}${t.pnl_pct.toFixed(2)}%</td>
-                    <td class="py-3 px-2"><span class="text-xs px-2 py-0.5 rounded bg-white/5 text-slate-300">${t.exit_reason || '—'}</span>${t.exit_detail ? `<br><span class="text-[10px] text-slate-600">${t.exit_detail}</span>` : ''}</td>
-                    <td class="py-3 px-2 text-xs text-slate-500">${new Date(t.time).toLocaleString()}</td>
-                </tr>
-            `).join('');
-        }
-
-        // Update charts
-        updateCharts();
-    }
-
-    // ─── Charts ───
-    function updateCharts() {
-        if (!DATA) return;
-
-        const stake = DATA.stake || 1000;
-        const equityCurve = DATA.equity_curve || [stake];
-        const exitReasons = DATA.exit_reasons || {};
-        const trades = DATA.trades || [];
-
-        // Equity Curve
-        const eqLabels = equityCurve.map((_, i) => i === 0 ? 'Start' : `#${i}`);
-        if (equityChart) {
-            equityChart.data.labels = eqLabels;
-            equityChart.data.datasets[0].data = equityCurve;
-            equityChart.update('none');
-        }
-
-        // Exit Reasons
-        const reasonLabels = Object.keys(exitReasons);
-        const reasonData = Object.values(exitReasons);
-        const reasonColors = ['#60a5fa', '#a78bfa', '#f472b6', '#34d399', '#fbbf24', '#f87171'];
-        if (exitChart && reasonLabels.length > 0) {
-            exitChart.data.labels = reasonLabels.map(r => r.replace(/_/g, ' '));
-            exitChart.data.datasets[0].data = reasonData;
-            exitChart.data.datasets[0].backgroundColor = reasonColors.slice(0, reasonLabels.length);
-            exitChart.update('none');
-        }
-
-        // Signal Chart — count long vs short trades
-        const longs = trades.filter(t => t.side === 'long').length;
-        const shorts = trades.filter(t => t.side === 'short').length;
-        if (signalChart) {
-            signalChart.data.datasets[0].data = [longs, shorts];
-            signalChart.update('none');
-        }
-    }
-
-    function initCharts() {
-        // Equity Curve
-        const eqCtx = document.getElementById("equityChart").getContext("2d");
-        const gradient = eqCtx.createLinearGradient(0, 0, 0, 250);
-        gradient.addColorStop(0, "rgba(96, 165, 250, 0.15)");
-        gradient.addColorStop(1, "rgba(96, 165, 250, 0.0)");
-
-        equityChart = new Chart(eqCtx, {
-            type: "line",
-            data: {
-                labels: ["Start"],
-                datasets: [{
-                    label: "Equity",
-                    data: [1000],
-                    borderColor: "#60a5fa",
-                    backgroundColor: gradient,
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHitRadius: 10,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "#475569", font: { size: 10 } } },
-                    y: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "#475569", font: { size: 10, family: "JetBrains Mono" }, callback: v => '$' + v } },
-                },
-                interaction: { intersect: false, mode: "index" },
-            }
-        });
-
-        // Exit Reasons
-        const exitCtx = document.getElementById("exitChart").getContext("2d");
-        exitChart = new Chart(exitCtx, {
-            type: "doughnut",
-            data: {
-                labels: ["No exits yet"],
-                datasets: [{
-                    data: [1],
-                    backgroundColor: ["#334155"],
-                    borderWidth: 0,
-                    hoverOffset: 4,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: "70%",
-                plugins: {
-                    legend: {
-                        position: "bottom",
-                        labels: { color: "#64748b", font: { size: 10 }, boxWidth: 8, padding: 12 },
-                    },
-                },
-            }
-        });
-
-        // Signal Chart
-        const sigCtx = document.getElementById("signalChart").getContext("2d");
-        signalChart = new Chart(sigCtx, {
-            type: "bar",
-            data: {
-                labels: ["Longs", "Shorts"],
-                datasets: [{
-                    label: "Signals",
-                    data: [0, 0],
-                    backgroundColor: ["rgba(34,197,94,0.6)", "rgba(239,68,68,0.6)"],
-                    borderRadius: 8,
-                    barThickness: 40,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: "#64748b" } },
-                    y: { grid: { color: "rgba(255,255,255,0.03)" }, ticks: { color: "#64748b", stepSize: 1 } },
-                },
-            }
-        });
-    }
-
-    // ─── Clock + Refresh Timer ───
-    function updateClock() {
-        document.getElementById("clock").textContent = new Date().toLocaleTimeString();
-    }
-
-    function tickRefresh() {
-        refreshCountdown--;
-        if (refreshCountdown <= 0) {
-            refreshCountdown = REFRESH_INTERVAL;
-            fetchData();
-        }
-        document.getElementById('refresh-timer').textContent = `Next refresh in ${refreshCountdown}s`;
-    }
-
-    // ─── Init ───
-    initCharts();
-    updateClock();
-    fetchData();
-    setInterval(updateClock, 1000);
-    setInterval(tickRefresh, 1000);
+    $('clock').textContent = new Date().toLocaleTimeString();
+    setInterval(() => $('clock').textContent = new Date().toLocaleTimeString(), 1000);
+    refresh();
+    setInterval(refresh, 60000);
     </script>
 </body>
 </html>
