@@ -27,7 +27,7 @@
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">N</div>
                 <div>
                     <h1 class="text-lg font-semibold">NEAR Trader <span class="text-xs text-purple-400 font-normal">v5</span></h1>
-                    <p class="text-xs text-slate-500">Paper Trading · StochRSI + Regime Filter + RSI Exit</p>
+                    <p class="text-xs text-slate-500">Paper Trading · v6 Score Entry + MACD + BB + Volume + Scaled TP</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -85,13 +85,13 @@
             <div class="glass rounded-xl p-5">
                 <h2 class="text-xs font-medium text-slate-400 mb-3">Strategy v5 Config</h2>
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Regime Filter</span><span class="mono text-xs text-blue-400">EMA(9/21) aligned = trade</span></div>
-                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Entry Score</span><span class="mono text-xs">≥ 60/100</span></div>
-                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Primary Exit</span><span class="mono text-xs text-green-400">RSI extreme (70/30)</span></div>
-                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Kill Exit</span><span class="mono text-xs text-red-400">1× ATR in 5 min</span></div>
-                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">StochRSI</span><span class="mono text-xs">14-3-3</span></div>
-                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Position Size</span><span class="mono text-xs">Vol-scaled 1-1.5%</span></div>
-                    <div class="flex justify-between py-1.5"><span class="text-slate-500 text-xs">Circuit Breaker</span><span class="mono text-xs">2 losses → 15min pause</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Entry Score</span><span class="mono text-xs text-blue-400">≥ 60/100 (6 factors)</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Scoring</span><span class="mono text-xs">StochRSI(25) MACD(20) EMA(20) RSI(15) Vol(10) BB(10)</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Take Profit</span><span class="mono text-xs text-green-400">TP1 +0.5% (50%) / TP2 +1.2%</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Hard Stop</span><span class="mono text-xs text-red-400">-0.5%</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Exits</span><span class="mono text-xs">RSI extreme + EMA reversal + Signal reversal</span></div>
+                    <div class="flex justify-between py-1.5 border-b border-white/5"><span class="text-slate-500 text-xs">Volume Filter</span><span class="mono text-xs">> 1.5× average</span></div>
+                    <div class="flex justify-between py-1.5"><span class="text-slate-500 text-xs">Circuit Breaker</span><span class="mono text-xs">2 losses → 15min pause + 3% daily limit</span></div>
                 </div>
             </div>
             <div class="glass rounded-xl p-5">
@@ -134,7 +134,7 @@
         </div>
 
         <footer class="text-center py-4 text-[10px] text-slate-600">
-            NEAR Paper Trader v5 · Regime Filter + Score Entry + RSI Exit + Circuit Breaker · Updated every 60s
+            NEAR Paper Trader v6 · Score Entry + MACD + BB + Volume + Scaled TP + Circuit Breaker · Updated every 60s
         </footer>
     </main>
 
