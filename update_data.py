@@ -44,11 +44,10 @@ def main():
         return
 
     state = json.loads(STATE_FILE.read_text())
-    trades = load_trades()
     price_data = fetch_price()
 
-    # Merge trades from state + log
-    all_trades = state.get("trades", []) + trades
+    # Merge trades from log + state (log first, so log's richer data wins dedup)
+    all_trades = load_trades() + state.get("trades", [])
     # Deduplicate by time
     seen = set()
     unique_trades = []
@@ -59,19 +58,19 @@ def main():
             unique_trades.append(t)
     unique_trades.sort(key=lambda t: t.get("time", ""))
 
-    # Compute stats
-    total_pnl = sum(t.get("pnl_usdt", 0) for t in unique_trades)
-    wins = sum(1 for t in unique_trades if t.get("pnl_usdt", 0) > 0)
+    # Compute stats (use net PnL if available)
+    total_pnl = sum(t.get("pnl_usdt_net", t.get("pnl_usdt", 0)) for t in unique_trades)
+    wins = sum(1 for t in unique_trades if t.get("pnl_usdt_net", t.get("pnl_usdt", 0)) > 0)
     total = len(unique_trades)
     current_price = price_data["price"] if price_data else (
         state["position"]["entry_price"] if state.get("position") else 0
     )
 
-    # Equity curve data (start → each trade)
+    # Equity curve data (start → each trade) — use net PnL
     equity_points = [state["stake_usdt"]]
     running = state["stake_usdt"]
     for t in unique_trades:
-        running += t.get("pnl_usdt", 0)
+        running += t.get("pnl_usdt_net", t.get("pnl_usdt", 0))
         equity_points.append(round(running, 2))
 
     data = {
