@@ -8,9 +8,9 @@ import requests
 from pathlib import Path
 from datetime import datetime, timezone
 
-STATE_FILE = Path("paper_trader_state.json")
-TRADE_LOG = Path("paper_trader_log.jsonl")
-DATA_FILE = Path("near-trader-dashboard/data.json")
+STATE_FILE = Path("/home/e/.openclaw/workspace/paper_trader_state.json")
+TRADE_LOG = Path("/home/e/.openclaw/workspace/paper_trader_log.jsonl")
+DATA_FILE = Path(__file__).parent / "data.json"
 
 def fetch_price():
     """Get current NEAR price from CoinGecko"""
