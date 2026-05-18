@@ -1,14 +1,14 @@
 # NEAR Trader — Live Status
 
-> Auto-generated | Last updated: 2026-05-18 15:12:27 UTC
+> Auto-generated | Last updated: 2026-05-18 15:29:18 UTC
 
 ```
 ============================================================
   NEAR/USDT Paper Trader — Status
 ============================================================
-  Process:     🔴 NOT RUNNING
-  Position:    FLAT
-  Balance:     $1000.00
+  Process:     🟢 RUNNING
+  Position:    SHORT @ $1.502 (score: 60)
+  Balance:     $0.00
   Trades:      0 (0W / 0L)
   Win Rate:    N/A
   Net P&L:     +$0.00 (+0.00%)
@@ -16,5 +16,11 @@
 ------------------------------------------------------------
   No trades yet.
 ------------------------------------------------------------
+  Recent Log:
+    2026-05-18 23:26:55,194 | INFO | ⏱️  #7 | $1.5020 | K=87.8 RSI=48.3 MACD-H=0.00071 Vol=0.5x | Bal: $1000.00
+    2026-05-18 23:26:55,194 | INFO | 🔵 OPENED SHORT @ $1.5020 | Size: 665.11 NEAR | Score: 60/100 | SRSI=25 MACD=0 EMA=20 RSI=15 Vol=0 BB=0
+    2026-05-18 23:28:27,618 | INFO | ⏱️  #8 | $1.4990 | K=83.8 RSI=44.4 MACD-H=0.00051 Vol=0.9x | Bal: $0.00
+    CD=0 EMA=20 RSI=15 Vol=0 BB=0
+    2026-05-18 23:28:27,618 | INFO | ⏱️  #8 | $1.4990 | K=83.8 RSI=44.4 MACD-H=0.00051 Vol=0.9x | Bal: $0.00
 ============================================================
 ```
