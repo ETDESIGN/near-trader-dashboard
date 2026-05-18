@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 STATE_FILE = Path("/home/e/.openclaw/workspace/paper_trader_state.json")
 TRADE_LOG = Path("/home/e/.openclaw/workspace/paper_trader_log.jsonl")
 DATA_FILE = Path(__file__).parent / "data.json"
+TRADING_FEE = 0.001
 
 def fetch_price():
     """Get current NEAR price from CoinGecko"""
@@ -37,6 +38,16 @@ def load_trades():
                 if line:
                     trades.append(json.loads(line))
     return trades
+
+def _position_equity(pos, current_price):
+    """Calculate current equity for an open position (what you'd get if you closed now)."""
+    size = pos["size"]
+    fee = size * current_price * TRADING_FEE
+    if pos["side"] == "long":
+        return size * current_price - fee
+    else:
+        # Short: you received size*entry from the short sale, buy back at current_price
+        return size * pos["entry_price"] - size * current_price - fee
 
 def main():
     if not STATE_FILE.exists():
@@ -90,8 +101,9 @@ def main():
             "total_pnl": round(total_pnl, 2),
             "total_pnl_pct": round(total_pnl / state.get("stake_usdt", 1000) * 100, 2),
             "equity": round(
-                state.get("balance_usdt", 0) or (
-                    state["position"]["size"] * current_price if state.get("position") else state.get("stake_usdt", 1000)
+                state.get("balance_usdt", 0) + (
+                    _position_equity(state["position"], current_price)
+                    if state.get("position") else 0
                 ), 2
             ),
         },

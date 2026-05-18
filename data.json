@@ -1,54 +1,57 @@
 {
-  "updated_at": "2026-05-18T15:29:18.133093+00:00",
+  "updated_at": "2026-05-18T16:18:45.329767+00:00",
   "pair": "NEAR/USDT",
   "stake": 1000,
-  "current_price": 1.5,
-  "price_change_24h": -1.71,
-  "balance_usdt": 0,
-  "position": {
-    "side": "short",
-    "entry_price": 1.502,
-    "size": 665.1132,
-    "entry_time": "2026-05-18T15:26:55.194283+00:00",
-    "signals": {
-      "srsi_k": 87.79,
-      "rsi": 48.3,
-      "macd_hist": 0.000706,
-      "ema_aligned": "yes",
-      "trend_15m": -1,
-      "price": 1.502,
+  "current_price": 1.52,
+  "price_change_24h": -0.46,
+  "balance_usdt": 992.01,
+  "position": null,
+  "trades": [
+    {
+      "time": "2026-05-18T15:43:55.962756+00:00",
+      "side": "short",
+      "entry_price": 1.502,
+      "exit_price": 1.511,
+      "size": 665.1132,
+      "pnl_usdt": -6.991,
+      "pnl_pct": -0.7,
+      "exit_reason": "hard_stop",
+      "exit_detail": "P/L -0.60% hit -0.5% stop",
+      "entry_time": "2026-05-18T15:26:55.194283+00:00",
       "score": 60,
-      "breakdown": {
-        "stochrsi": 25,
-        "macd": 0,
-        "ema": 20,
-        "rsi": 15,
-        "volume": 0,
-        "bb": 0
-      }
+      "total_pnl_incl_partial": -6.991
     },
-    "tp1_hit": false,
-    "partial_closed": 0.0,
-    "score": 60,
-    "entry_fee": 1.0
-  },
-  "trades": [],
+    {
+      "time": "2026-05-18T15:45:28.244816+00:00",
+      "side": "short",
+      "entry_price": 1.511,
+      "exit_price": 1.511,
+      "size": 663.7829,
+      "pnl_usdt": -1.003,
+      "pnl_pct": -0.1,
+      "exit_reason": "ema_reversal",
+      "exit_detail": "EMA9(1.5037) > EMA21(1.5033)",
+      "entry_time": "2026-05-18T15:43:55.963028+00:00",
+      "score": 70,
+      "total_pnl_incl_partial": -1.003
+    }
+  ],
   "stats": {
-    "total_trades": 0,
+    "total_trades": 2,
     "wins": 0,
-    "losses": 0,
-    "win_rate": 0,
-    "total_pnl": 0,
-    "total_pnl_pct": 0.0,
-    "equity": 997.67
+    "losses": 2,
+    "win_rate": 0.0,
+    "total_pnl": -7.99,
+    "total_pnl_pct": -0.8,
+    "equity": 992.01
   },
   "equity_curve": [
-    1000
+    1000,
+    993.01,
+    992.01
   ],
   "exit_reasons": {
-    "median_recross": 65,
-    "rpmar": 25,
-    "signal_reversal": 5,
-    "rsi": 5
+    "hard_stop": 1,
+    "ema_reversal": 1
   }
 }
